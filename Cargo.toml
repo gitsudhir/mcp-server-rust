@@ -1,0 +1,37 @@
+[package]
+name = "mcp-server-rust"
+version = "0.1.0"
+edition = "2024"
+authors = ["Sudhir Kumar (sudhirkumar.in)"]
+description = "A Model Context Protocol (MCP) server implementation in Rust"
+
+[dependencies]
+tokio = { version = "1.35", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+thiserror = "2.0.18"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+uuid = { version = "1.6", features = ["v4", "serde"] }
+regex = "1.10"
+async-trait = "0.1"
+bytes = "1.5"
+futures = "0.3"
+jsonrpc = "0.19.0"
+jsonrpc-core = "18.0"
+futures-util = "0.3"
+
+# For file operations
+tokio-util = { version = "0.7", features = ["codec"] }
+
+[dev-dependencies]
+tokio-test = "0.4"
+
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
