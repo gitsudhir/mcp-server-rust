@@ -1,7 +1,7 @@
-use super::{Prompt, PromptArgument, GetPromptResult, Message, MessageContent, PromptHandler};
-use serde_json::Value;
+use super::{GetPromptResult, Message, MessageContent, Prompt, PromptArgument, PromptHandler};
+use crate::utils::{Error, Logger, Result};
 use async_trait::async_trait;
-use crate::utils::{Result, Error, Logger};
+use serde_json::Value;
 
 pub struct CodeReviewPrompt {
     logger: Logger,
@@ -43,7 +43,8 @@ impl Default for CodeReviewPrompt {
 #[async_trait]
 impl PromptHandler for CodeReviewPrompt {
     async fn get(&self, arguments: Option<Value>) -> Result<GetPromptResult> {
-        let args = arguments.ok_or_else(|| Error::InvalidParams("Missing arguments".to_string()))?;
+        let args =
+            arguments.ok_or_else(|| Error::InvalidParams("Missing arguments".to_string()))?;
 
         let code = args
             .get("code")
@@ -55,9 +56,12 @@ impl PromptHandler for CodeReviewPrompt {
             .and_then(|v| v.as_str())
             .unwrap_or("general");
 
-        self.logger.debug_with_context("Generating code review prompt", focus);
+        self.logger
+            .debug_with_context("Generating code review prompt", focus);
 
-        let mut prompt_text = "Please review the following code for potential issues and suggest improvements".to_string();
+        let mut prompt_text =
+            "Please review the following code for potential issues and suggest improvements"
+                .to_string();
         if focus != "general" {
             prompt_text.push_str(&format!(", focusing specifically on {}", focus));
         }
@@ -65,12 +69,10 @@ impl PromptHandler for CodeReviewPrompt {
 
         Ok(GetPromptResult {
             description: Some(format!("Requesting {} review for code snippet", focus)),
-            messages: vec![
-                Message {
-                    role: "user".to_string(),
-                    content: vec![MessageContent::new(prompt_text)],
-                }
-            ],
+            messages: vec![Message {
+                role: "user".to_string(),
+                content: vec![MessageContent::new(prompt_text)],
+            }],
         })
     }
 }
