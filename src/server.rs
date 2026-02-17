@@ -1,6 +1,7 @@
 use crate::tools::*;
 use crate::resources::*;
 use crate::resources::config_resource::ConfigResource;
+use crate::resources::file_resource::FileResource;
 use crate::prompts::*;
 use crate::prompts::code_review_prompt::CodeReviewPrompt;
 use crate::utils::{Result, Error, Logger};
@@ -11,6 +12,8 @@ use tokio::sync::Mutex;
 use crate::tools::greeting_tool::GreetingTool;
 use crate::tools::calculator_tool::CalculatorTool;
 use crate::tools::weather_tool::WeatherTool;
+use std::path::PathBuf;
+
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct ServerConfig {
     pub name: String,
@@ -43,11 +46,20 @@ impl McpServer {
             config.name, config.version
         ));
 
+        let mut resources_map: HashMap<String, Arc<dyn ResourceHandler>> = HashMap::new();
+
+        let config_res = Arc::new(ConfigResource::new());
+        resources_map.insert("config".to_string(), config_res as Arc<dyn ResourceHandler>);
+
+        let current_dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+        let file_res = Arc::new(FileResource::new(current_dir));
+        resources_map.insert("file".to_string(), file_res as Arc<dyn ResourceHandler>);
+
         Self {
             config,
             logger,
             tools: Arc::new(Mutex::new(HashMap::new())),
-            resources: Arc::new(Mutex::new(HashMap::new())),
+            resources: Arc::new(Mutex::new(resources_map)),
             prompts: Arc::new(Mutex::new(HashMap::new())),
             initialized: Arc::new(Mutex::new(false)),
         }
@@ -234,15 +246,14 @@ impl McpServer {
     async fn handle_resources_list(&self, _message: &Value) -> Result<Value> {
         self.logger.debug("Listing resources");
 
+        let resources_map = self.resources.lock().await;
+        let resources: Vec<ResourceDefinition> = resources_map
+            .values()
+            .map(|handler| handler.resource_definition())
+            .collect();
+
         Ok(json!({
-            "resources": [
-                {
-                    "uri": "config://app",
-                    "name": "Application Configuration",
-                    "description": "Current application configuration",
-                    "mimeType": "application/json"
-                }
-            ]
+            "resources": resources
         }))
     }
 
@@ -258,12 +269,18 @@ impl McpServer {
 
         self.logger.debug(&format!("Reading resource: {}", uri));
 
-        let result = if uri.starts_with("config://") {
-            let handler = ConfigResource::new();
-            handler.read(uri).await?
-        } else {
-            return Err(Error::ResourceError(format!("Resource not found: {}", uri)));
-        };
+        let parts: Vec<&str> = uri.splitn(2, "://").collect();
+        if parts.len() < 2 {
+            return Err(Error::InvalidParams(format!("Invalid URI format: {}", uri)));
+        }
+        let scheme = parts[0];
+
+        let resources_map = self.resources.lock().await;
+        let handler = resources_map
+            .get(scheme)
+            .ok_or_else(|| Error::ResourceError(format!("Resource handler not found for scheme: {}", scheme)))?;
+
+        let result = handler.read(uri).await?;
 
         Ok(json!(result))
     }

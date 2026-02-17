@@ -36,6 +36,10 @@ impl Logger {
         debug!(logger = %self.name, context = %context, "{}", msg);
     }
 
+    pub fn warn_with_context(&self, msg: &str, context: &str) {
+        warn!(logger = %self.name, context = %context, "{}", msg);
+    }
+
     pub fn error_with_context(&self, msg: &str, context: &str) {
         error!(logger = %self.name, context = %context, "{}", msg);
     }

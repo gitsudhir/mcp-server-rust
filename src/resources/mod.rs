@@ -15,6 +15,8 @@ pub struct Resource {
     pub blob: Option<String>, // base64 encoded
     #[serde(skip_serializing_if = "Option::is_none")]
     pub size: Option<u64>,
+    #[serde(rename = "isDir", skip_serializing_if = "Option::is_none")]
+    pub is_dir: Option<bool>,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -25,4 +27,16 @@ pub struct ResourceReadResult {
 #[async_trait]
 pub trait ResourceHandler: Send + Sync {
     async fn read(&self, uri: &str) -> Result<ResourceReadResult>;
+    async fn write(&self, uri: &str, content: &[u8], mime_type: &str) -> Result<()>;
+    async fn list_directory(&self, uri: &str) -> Result<ResourceReadResult>;
+    fn resource_definition(&self) -> ResourceDefinition;
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct ResourceDefinition {
+    pub uri: String,
+    pub name: String,
+    pub description: String,
+    #[serde(rename = "mimeType")]
+    pub mime_type: String,
 }
