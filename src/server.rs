@@ -46,20 +46,11 @@ impl McpServer {
             config.name, config.version
         ));
 
-        let mut resources_map: HashMap<String, Arc<dyn ResourceHandler>> = HashMap::new();
-
-        let config_res = Arc::new(ConfigResource::new());
-        resources_map.insert("config".to_string(), config_res as Arc<dyn ResourceHandler>);
-
-        let current_dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-        let file_res = Arc::new(FileResource::new(current_dir));
-        resources_map.insert("file".to_string(), file_res as Arc<dyn ResourceHandler>);
-
         Self {
             config,
             logger,
             tools: Arc::new(Mutex::new(HashMap::new())),
-            resources: Arc::new(Mutex::new(resources_map)),
+            resources: Arc::new(Mutex::new(HashMap::new())),
             prompts: Arc::new(Mutex::new(HashMap::new())),
             initialized: Arc::new(Mutex::new(false)),
         }
@@ -119,8 +110,6 @@ impl McpServer {
             "ping" => self.handle_ping(&message).await,
             "tools/list" => self.handle_tools_list(&message).await,
             "tools/call" => self.handle_tools_call(&message).await,
-            "resources/list" => self.handle_resources_list(&message).await,
-            "resources/read" => self.handle_resources_read(&message).await,
             "prompts/list" => self.handle_prompts_list(&message).await,
             "prompts/get" => self.handle_prompts_get(&message).await,
             _ => Err(Error::MethodNotFound(method.to_string())),
@@ -172,7 +161,6 @@ impl McpServer {
             "protocolVersion": crate::PROTOCOL_VERSION,
             "capabilities": {
                 "tools": {},
-                "resources": {},
                 "prompts": {}
             },
             "serverInfo": {
