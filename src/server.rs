@@ -1,3 +1,4 @@
+use crate::tools::web_tool::WebTool;
 use crate::tools::*;
 use crate::resources::*;
 use crate::resources::config_resource::ConfigResource;
@@ -187,6 +188,7 @@ impl McpServer {
             GreetingTool::tool_definition(),
             CalculatorTool::tool_definition(),
             WeatherTool::tool_definition(),
+            WebTool::tool_definition(),
         ];
 
         Ok(json!({
@@ -223,6 +225,10 @@ impl McpServer {
             }
             "fetch-weather" => {
                 let handler = WeatherTool::new();
+                handler.call(arguments).await?
+            }
+            "fetch-url" => {
+                let handler = WebTool::new();
                 handler.call(arguments).await?
             }
             _ => return Err(Error::MethodNotFound(format!("Tool not found: {}", tool_name))),

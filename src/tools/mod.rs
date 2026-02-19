@@ -1,6 +1,7 @@
 pub mod greeting_tool;
 pub mod calculator_tool;
 pub mod weather_tool;
+pub mod web_tool;
 
 use serde_json::{Value};
 use async_trait::async_trait;

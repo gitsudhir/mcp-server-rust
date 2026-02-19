@@ -24,6 +24,7 @@ futures-util = "0.3"
 
 # For file operations
 tokio-util = { version = "0.7", features = ["codec"] }
+reqwest = "0.13.2"
 
 [dev-dependencies]
 tokio-test = "0.4"

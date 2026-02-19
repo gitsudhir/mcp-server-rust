@@ -37,6 +37,9 @@ pub enum Error {
 
     #[error("Validation error: {0}")]
     ValidationError(String),
+
+    #[error("Network error: {0}")]
+    NetworkError(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
